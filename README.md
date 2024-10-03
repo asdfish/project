@@ -10,3 +10,6 @@ sudo make install
 
 ## Configuration
 See config.hpp for an example configuration
+
+## Showcase
+![gif showing this repo working](./showcase.gif)
