@@ -7,3 +7,6 @@ git clone https://github.com/asdfish/project/ --depth=1
 cd project
 sudo make install
 ~~~
+
+## Configuration
+See config.hpp for an example configuration
