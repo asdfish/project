@@ -99,13 +99,13 @@ int main() {
         ftxui::text(" Template: "),
         ftxui::separator(),
         menu->Render(),
-      }),
+      }) | ftxui::vscroll_indicator,
       ftxui::separator(),
       ftxui::vbox({
         ftxui::text(" Dependencies: "),
         ftxui::separator(),
         tabs->Render(),
-      }),
+      }) | ftxui::vscroll_indicator,
       ftxui::separator(),
       ftxui::vbox({
         ftxui::text(" Options: "),
