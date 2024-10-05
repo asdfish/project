@@ -35,7 +35,7 @@ static Dependency miniaudio = {
   .modified_variables = {
     {
       .name = "#INCLUDE_FLAGS",
-      .argument = " -Ideps/miniaudio",
+      .argument = " -Ideps/miniaudio/extras/miniaudio_split",
       .function = append
     },
     {
@@ -51,11 +51,17 @@ static Dependency miniaudio = {
     {
       .name = "#TARGETS",
       .argument = "\n"
-        "miniaudio: dependencies_prep\n"
+        "miniaudio: build_prep dependencies_prep\n"
         "ifeq (, $(wildcard deps/miniaudio))\n"
         "\tgit -C deps clone https://github.com/mackron/miniaudio --depth=1 --branch=0.11.21\n"
-        "endif",
+        "\t${CC} -c deps/miniaudio/extras/miniaudio_split/miniaudio.c -o build/miniaudio.c.o\n"
+        "endif\n",
       .function = append,
+    },
+    {
+      .name = "#OBJECT_FILES",
+      .argument = " build/miniaudio.c.o",
+      .function = append
     },
   },
 };
@@ -95,10 +101,10 @@ static Dependency termbox2 = {
 static std::vector<ProjectTemplate> project_templates = {
   {
     .name = "c",
-    .directories = { "#PROJECT_NAME" },
+    .directories = { "#PROJECT_NAME", "#PROJECT_NAME/src" },
     .files = {
       {
-        .path = "#PROJECT_NAME/main.c",
+        .path = "#PROJECT_NAME/src/main.c",
         .contents = "int main() {\n"
           "  return 0;\n"
           "}\n",
@@ -108,14 +114,14 @@ static std::vector<ProjectTemplate> project_templates = {
         .contents = "STANDARD := -std=c99\n"
           "LINK_FLAGS := #LINK_FLAGS\n"
           "INCLUDE_FLAGS := #INCLUDE_FLAGS\n"
-          "SOURCE_FILES := main.c\n"
+          "SOURCE_FILES := src/main.c\n"
           "HEADER_FILES :=\n"
-          "DEBUG_FLAGS := -Wall -Wextra -Werror -Wpedantic\n"
+          "DEBUG_FLAGS := -Wall -Wextra -Wpedantic\n"
           "OPTIMIZATION_FLAGS := -Og\n"
           "CC ?= gcc\n"
           "INSTALL_DIRECTORY := /usr/local/bin\n"
           "\n"
-          "OBJECT_FILES :=\n"
+          "OBJECT_FILES := #OBJECT_FILES\n"
           "\n"
           "define COMPILE_FILE\n"
           "\t${CC} -c ${STANDARD} $(1) ${INCLUDE_FLAGS} ${DEBUG_FLAGS} ${OPTIMIZATION_FLAGS} -o build/$(notdir $(1)).o \n"
@@ -125,15 +131,17 @@ static std::vector<ProjectTemplate> project_templates = {
           "\n"
           "all: #TARGET_NAMES compile\n"
           "\n"
-          "compile: ${SOURCE_FILES} ${HEADER_FILES}\n"
-          "ifeq (, $(wildcard build))\n"
-          "\tmkdir build\n"
-          "endif\n"
+          "compile: build_prep ${SOURCE_FILES} ${HEADER_FILES}\n"
           "\t$(foreach SOURCE_FILE,$\\\n"
           "\t  ${SOURCE_FILES},$\\\n"
           "\t  $(call COMPILE_FILE,${SOURCE_FILE})$\\\n"
           "\t)\n"
           "\t${CC} ${OBJECT_FILES} ${LINK_FLAGS} -o #PROJECT_NAME\n"
+          "\n"
+          "build_prep:\n"
+          "ifeq (, $(wildcard build))\n"
+          "\tmkdir build\n"
+          "endif\n"
           "\n"
           "dependencies_prep:\n"
           "ifeq (, $(wildcard deps))\n"
@@ -172,12 +180,22 @@ static std::vector<ProjectTemplate> project_templates = {
         .function = prompt,
       },
       {
+        .name = "#SOURCE_FILES",
+        .argument = "",
+        .function = set,
+      },
+      {
         .name = "#INCLUDE_FLAGS",
         .argument = "",
         .function = set,
       },
       {
         .name = "#LINK_FLAGS",
+        .argument = "",
+        .function = set,
+      },
+      {
+        .name = "#OBJECT_FILES",
         .argument = "",
         .function = set,
       },
@@ -199,44 +217,48 @@ static std::vector<ProjectTemplate> project_templates = {
     },
   },
   {
-    .name = "c++",
-    .directories = { "#PROJECT_NAME" },
+    .name = "c (current directory)",
+    .directories = { "src" },
     .files = {
       {
-        .path = "#PROJECT_NAME/main.cpp",
+        .path = "src/main.c",
         .contents = "int main() {\n"
           "  return 0;\n"
-          "}\n"
+          "}\n",
       },
       {
-        .path = "#PROJECT_NAME/Makefile",
-        .contents = "STANDARD := -std=c++20\n"
+        .path = "Makefile",
+        .contents = "STANDARD := -std=c99\n"
           "LINK_FLAGS := #LINK_FLAGS\n"
-          "SOURCE_FILES := main.cpp\n"
+          "INCLUDE_FLAGS := #INCLUDE_FLAGS\n"
+          "SOURCE_FILES := src/main.c\n"
           "HEADER_FILES :=\n"
-          "DEBUG_FLAGS := -Wall -Wextra -Werror -Wpedantic\n"
+          "DEBUG_FLAGS := -Wall -Wextra -Wpedantic\n"
           "OPTIMIZATION_FLAGS := -Og\n"
-          "CXX ?= g++\n"
+          "CC ?= gcc\n"
+          "INSTALL_DIRECTORY := /usr/local/bin\n"
           "\n"
-          "OBJECT_FILES :=\n"
+          "OBJECT_FILES := #OBJECT_FILES\n"
           "\n"
           "define COMPILE_FILE\n"
-          "\t${CXX} ${STANDARD} -c $(1) ${DEBUG_FLAGS} ${OPTIMIZATION_FLAGS} -o build/$(notdir $(1)).o\n"
+          "\t${CC} -c ${STANDARD} $(1) ${INCLUDE_FLAGS} ${DEBUG_FLAGS} ${OPTIMIZATION_FLAGS} -o build/$(notdir $(1)).o \n"
           "\t$(eval OBJECT_FILES+=build/$(notdir $(1)).o)\n"
           "\n"
           "endef\n"
           "\n"
           "all: #TARGET_NAMES compile\n"
           "\n"
-          "compile: ${SOURCE_FILES} ${HEADER_FILES}\n"
+          "compile: build_prep ${SOURCE_FILES} ${HEADER_FILES}\n"
+          "\t$(foreach SOURCE_FILE,$\\\n"
+          "\t  ${SOURCE_FILES},$\\\n"
+          "\t  $(call COMPILE_FILE,${SOURCE_FILE})$\\\n"
+          "\t)\n"
+          "\t${CC} ${OBJECT_FILES} ${LINK_FLAGS} -o #PROJECT_NAME\n"
+          "\n"
+          "build_prep:\n"
           "ifeq (, $(wildcard build))\n"
           "\tmkdir build\n"
           "endif\n"
-          "\t$(foreach SOURCE_FILE,$\\\n"
-          "\t\t${SOURCE_FILES},$\\\n"
-          "\t\t$(call COMPILE_FILE,${SOURCE_FILE})$\\\n"
-          ")\n"
-          "\t${CXX} ${OBJECT_FILES} ${LINK_FLAGS} -o #PROJECT_NAME\n"
           "\n"
           "dependencies_prep:\n"
           "ifeq (, $(wildcard deps))\n"
@@ -266,7 +288,7 @@ static std::vector<ProjectTemplate> project_templates = {
           "ifneq (, $(wildcard deps))\n"
           "\trm -rf deps\n"
           "endif\n"
-      }
+      },
     },
     .initial_variables = {
       {
@@ -275,62 +297,40 @@ static std::vector<ProjectTemplate> project_templates = {
         .function = prompt
       },
       {
+        .name = "#SOURCE_FILES",
+        .argument = "",
+        .function = set,
+      },
+      {
         .name = "#INCLUDE_FLAGS",
         .argument = "",
-        .function = set
+        .function = set,
       },
       {
         .name = "#LINK_FLAGS",
         .argument = "",
-        .function = set
+        .function = set,
+      },
+      {
+        .name = "#OBJECT_FILES",
+        .argument = "",
+        .function = set,
       },
       {
         .name = "#TARGET_NAMES",
         .argument = "",
-        .function = set
+        .function = set,
       },
       {
         .name = "#TARGETS",
         .argument = "",
-        .function = set
+        .function = set,
       },
     },
     .dependencies = {
       miniaudio,
       raylib,
       termbox2,
-      {
-        .name = "ftxui",
-        .modified_variables = {
-          {
-            .name = "#INCLUDE_FLAGS",
-            .argument = " -Ideps/ftxui/include",
-            .function = append
-          },
-          {
-            .name = "#LINK_FLAGS",
-            .argument = " -Ldeps/ftxui/build -lftxui-component -lftxui-dom -lftxui-screen",
-            .function = append,
-          },
-          {
-            .name = "#TARGET_NAMES",
-            .argument = " ftxui",
-            .function = append
-          },
-          {
-            .name = "#TARGETS",
-            .argument = "\n"
-              "ftxui: dependencies_prep\n"
-              "ifeq (, $(wildcard deps/ftxui))\n"
-              "\tgit -C deps clone https://github.com/ArthurSonzogni/ftxui --depth=1 --branch=v5.0.0\n"
-              "\tmkdir deps/ftxui/build\n"
-              "\tcmake -S deps/ftxui -B deps/ftxui/build\n"
-              "\tmake -C deps/ftxui/build\n"
-              "endif\n",
-            .function = append
-          }
-        },
-      },
     },
   },
 };

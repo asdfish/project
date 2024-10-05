@@ -2,8 +2,8 @@ CXX ?= g++
 
 STANDARD := -std=c++20
 
-SOURCE_FILES := main.cpp variable_functions.cpp
-HEADER_FILES := config.hpp variable_functions.hpp
+SOURCE_FILES := src/main.cpp src/variable_functions.cpp
+HEADER_FILES := config.hpp src/variable_functions.hpp
 
 LINK_FLAGS := -Ldeps/ftxui/build -lftxui-component -lftxui-dom -lftxui-screen
 INCLUDE_FLAGS := -Ideps/ftxui/include
