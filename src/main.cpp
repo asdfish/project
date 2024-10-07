@@ -41,7 +41,7 @@ struct ProjectTemplate {
 void set_variable(VariableDescriptor*, std::vector<Variable>*);
 std::string process_string(std::string, std::vector<Variable>*);
 
-#include "variable_functions.hpp"
+#include <variable_functions.hpp>
 #include "../config.hpp"
 
 #define CLEANUP_SELECTIONS() {                              \
