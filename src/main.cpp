@@ -13,7 +13,7 @@
 struct VariableDescriptor {
   std::string name;
   std::string argument;
-  std::string (*function) (std::string, std::string);
+  void (*function) (std::string*, std::string);
 };
 
 struct Variable {
@@ -71,7 +71,7 @@ int main() {
     tabs->Add(tab_buffer);
   }
 
-  unsigned int exit_code;
+  unsigned int exit_code = 1;
   ftxui::Component buttons = ftxui::Container::Vertical({
     ftxui::Button(" Submit ", [&] {
       screen.Exit();
@@ -79,7 +79,6 @@ int main() {
     }),
     ftxui::Button(" Quit ", [&] {
       screen.Exit();
-      exit_code = 1;
     }),
   });
 
@@ -173,14 +172,15 @@ void cleanup_selections(std::vector<std::vector<bool*>>* selections) {
 void set_variable(VariableDescriptor* variable_descriptor, std::vector<Variable>* variables) {
   for(unsigned int i = 0; i < variables->size(); i ++) {
     if(variables->at(i).name == variable_descriptor->name) {
-      variables->at(i).contents = variable_descriptor->function(variables->at(i).contents, variable_descriptor->argument);
+      variable_descriptor->function(&variables->at(i).contents, variable_descriptor->argument);
       return;
     }
   }
 
   Variable variable;
   variable.name = variable_descriptor->name;
-  variable.contents = variable_descriptor->function("", variable_descriptor->argument);
+  variable.contents = "";
+  variable_descriptor->function(&variable.contents, variable_descriptor->argument);
 
   variables->push_back(variable);
 }

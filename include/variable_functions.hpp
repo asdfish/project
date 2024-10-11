@@ -1,6 +1,10 @@
-#pragma once
+#ifndef VARIABLE_FUNCTIONS_HPP
+#define VARIABLE_FUNCTIONS_HPP
+
 #include <string>
 
-std::string append(std::string, std::string);
-std::string set(std::string, std::string);
-std::string prompt(std::string, std::string);
+void append(std::string*, std::string);
+void set(std::string*, std::string);
+void prompt(std::string*, std::string);
+
+#endif
