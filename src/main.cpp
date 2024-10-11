@@ -1,3 +1,4 @@
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -8,11 +9,6 @@
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
-
-struct File {
-  std::string path;
-  std::string contents;
-};
 
 struct VariableDescriptor {
   std::string name;
@@ -33,7 +29,7 @@ struct Dependency {
 struct ProjectTemplate {
   std::string name;
   std::vector<std::string> directories;
-  std::vector<File> files;
+  std::vector<std::array<std::string, 2>> files;
   std::vector<VariableDescriptor> initial_variables;
   std::vector<Dependency> dependencies;
 };
@@ -146,14 +142,14 @@ int main() {
   }
 
   for(unsigned int i = 0; i < project_template_pointer->files.size(); i ++) {
-    std::string processed_path = process_string(project_template_pointer->files[i].path, &variables);
+    std::string processed_path = process_string(project_template_pointer->files[i][0], &variables);
 
     if(std::filesystem::exists(processed_path)) {
       std::cout << "File " << processed_path << " already exists\n";
       continue;
     }
 
-    std::string processed_contents = process_string(project_template_pointer->files[i].contents, &variables);
+    std::string processed_contents = process_string(project_template_pointer->files[i][1], &variables);
 
     std::ofstream file(processed_path);
     if(file.fail())

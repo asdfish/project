@@ -79,21 +79,17 @@ static Dependency termbox2 = {
       .argument = " -Ldeps/termbox2 -ltermbox",
       .function = append,
     },
+    { "#TARGET_NAMES", " termbox2", append, },
     {
-      .name = "#TARGET_NAMES",
-      .argument = " termbox2",
-      .function = append,
-    },
-    {
-      .name = "#TARGETS",
-      .argument = "\n"
+      "#TARGETS",
         "termbox2: dependencies_prep\n"
         "ifeq (, $(wildcard deps/termbox2))\n"
         "\tgit -C deps clone https://github.com/termbox/termbox2 --depth=1 --branch=v2.0.0\n"
         "\tmake -C deps/termbox2\n"
         "\trm deps/termbox2/*.o deps/termbox2/*.so\n"
-        "endif\n",
-      .function = append,
+        "endif\n"
+        "\n",
+        append,
     },
   },
 };
