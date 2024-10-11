@@ -1,98 +1,5 @@
-#pragma once
-static Dependency raylib = {
-  .name = "raylib",
-  .modified_variables = {
-    {
-      .name = "#INCLUDE_FLAGS",
-      .argument = " -Ideps/raylib/build/raylib/include",
-      .function = append
-    },
-    {
-      .name = "#LINK_FLAGS",
-      .argument = "-Ldeps/raylib/build/raylib -lraylib",
-      .function = append,
-    },
-    {
-      .name = "#TARGET_NAMES",
-      .argument = " raylib",
-      .function = append,
-    },
-    {
-      .name = "#TARGETS",
-      .argument = "raylib: dependencies_prep\n"
-                  "ifeq (, $(wildcard deps/raylib))\n"
-                  "\tgit -C deps clone https://github.com/raysan5/raylib --depth=1 --branch=5.0\n"
-                  "\tmkdir deps/raylib/build\n"
-                  "\tcmake -S deps/raylib -B deps/raylib/build -DBUILD_EXAMPLES=OFF -DPLATFORM=Desktop\n"
-                  "\tmake -C deps/raylib/build\n"
-                  "endif\n",
-      .function = append
-    }
-  }
-};
-static Dependency miniaudio = {
-  .name = "miniaudio",
-  .modified_variables = {
-    {
-      .name = "#INCLUDE_FLAGS",
-      .argument = " -Ideps/miniaudio/extras/miniaudio_split",
-      .function = append
-    },
-    {
-      .name = "#LINK_FLAGS",
-      .argument = " -ldl -lm -lpthread",
-      .function = append,
-    },
-    {
-      .name = "#TARGET_NAMES",
-      .argument = " miniaudio",
-      .function = append
-    },
-    {
-      .name = "#TARGETS",
-      .argument = "\n"
-        "miniaudio: build_prep dependencies_prep\n"
-        "ifeq (, $(wildcard deps/miniaudio))\n"
-        "\tgit -C deps clone https://github.com/mackron/miniaudio --depth=1 --branch=0.11.21\n"
-        "\t${CC} -c deps/miniaudio/extras/miniaudio_split/miniaudio.c -o build/miniaudio.c.o\n"
-        "endif\n",
-      .function = append,
-    },
-    {
-      .name = "#OBJECT_FILES",
-      .argument = " build/miniaudio.c.o",
-      .function = append
-    },
-  },
-};
-
-static Dependency termbox2 = {
-  .name = "termbox2",
-  .modified_variables = {
-    {
-      .name = "#INCLUDE_FLAGS",
-      .argument = " -Ideps/termbox2",
-      .function = append
-    },
-    {
-      .name = "#LINK_FLAGS",
-      .argument = " -Ldeps/termbox2 -ltermbox",
-      .function = append,
-    },
-    { "#TARGET_NAMES", " termbox2", append, },
-    {
-      "#TARGETS",
-        "termbox2: dependencies_prep\n"
-        "ifeq (, $(wildcard deps/termbox2))\n"
-        "\tgit -C deps clone https://github.com/termbox/termbox2 --depth=1 --branch=v2.0.0\n"
-        "\tmake -C deps/termbox2\n"
-        "\trm deps/termbox2/*.o deps/termbox2/*.so\n"
-        "endif\n"
-        "\n",
-        append,
-    },
-  },
-};
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
 static std::vector<ProjectTemplate> project_templates = {
   {
@@ -107,81 +14,85 @@ static std::vector<ProjectTemplate> project_templates = {
       },
       {
         "#PROJECT_NAME/Makefile",
-          "STANDARD := -std=c99\n"
+          "CC ?= cc\n"
+          "C_STANDARD := -std=c99\n"
+          "\n"
           "LINK_FLAGS := #LINK_FLAGS\n"
           "INCLUDE_FLAGS := #INCLUDE_FLAGS\n"
-          "SOURCE_FILES := src/main.c\n"
-          "HEADER_FILES :=\n"
+          "\n"
           "DEBUG_FLAGS := -Wall -Wextra -Wpedantic\n"
-          "OPTIMIZATION_FLAGS := -Og\n"
-          "CC ?= gcc\n"
+          "OPTIMIZATION_FLAGS := -Og -g\n"
+          "\n"
           "INSTALL_DIRECTORY := /usr/local/bin\n"
           "\n"
-          "OBJECT_FILES := #OBJECT_FILES\n"
+          "#PROJECT_NAME_OBJECT_FILES := build/main.c.o\n"
           "\n"
-          "define COMPILE_FILE\n"
-          "\t${CC} -c ${STANDARD} $(1) ${INCLUDE_FLAGS} ${DEBUG_FLAGS} ${OPTIMIZATION_FLAGS} -o build/$(notdir $(1)).o \n"
-          "\t$(eval OBJECT_FILES+=build/$(notdir $(1)).o)\n"
+          "define COMPILE\n"
+          "\t${CC} ${C_STANDARD} -c $(1) ${INCLUDE_FLAGS} ${DEBUG_FLAGS} ${OPTIMIZATION_FLAGS} -o build/$(notdir $(1)).o\n"
           "\n"
           "endef\n"
           "\n"
-          "all: #TARGET_NAMES compile\n"
+          "all: deps build #TARGET_NAMES #PROJECT_NAME\n"
           "\n"
-          "compile: build_prep ${SOURCE_FILES} ${HEADER_FILES}\n"
-          "\t$(foreach SOURCE_FILE,$\\\n"
-          "\t  ${SOURCE_FILES},$\\\n"
-          "\t  $(call COMPILE_FILE,${SOURCE_FILE})$\\\n"
-          "\t)\n"
-          "\t${CC} ${OBJECT_FILES} ${LINK_FLAGS} -o #PROJECT_NAME\n"
-          "\n"
-          "build_prep:\n"
-          "ifeq (, $(wildcard build))\n"
-          "\tmkdir build\n"
-          "endif\n"
-          "\n"
-          "dependencies_prep:\n"
-          "ifeq (, $(wildcard deps))\n"
+          "deps:\n"
           "\tmkdir deps\n"
-          "endif\n"
+          "\n"
+          "build:\n"
+          "\tmkdir build\n"
           "\n"
           "#TARGETS\n"
           "\n"
-          "install: ${INSTALL_DIRECTORY}\n"
-          "ifeq (, $(wildcard #PROJECT_NAME))\n"
-          "\tmake\n"
-          "endif\n"
-          "\tcp -f #PROJECT_NAME ${INSTALL_DIRECTORY}\n"
+          "build/main.c.o: src/main.c\n"
+          "\t$(call COMPILE,src/main.c)\n"
           "\n"
-          "uninstall:\n"
-          "ifneq (, $(wildcard ${INSTALL_DIRECTORY}/#PROJECT_NAME))\n"
-          "\trm -f ${INSTALL_DIRECTORY}/#PROJECT_NAME\n"
-          "endif\n"
+          "#PROJECT_NAME: ${#PROJECT_NAME_OBJECT_FILES}\n"
+          "\t${CC} ${#PROJECT_NAME_OBJECT_FILES} ${LINK_FLAGS} -o #PROJECT_NAME\n"
           "\n"
           "clean:\n"
-          "ifneq (, $(wildcard #PROJECT_NAME))\n"
-          "\trm -f #PROJECT_NAME\n"
-          "endif\n"
           "ifneq (, $(wildcard build))\n"
           "\trm -rf build\n"
           "endif\n"
           "ifneq (, $(wildcard deps))\n"
           "\trm -rf deps\n"
           "endif\n"
+          "ifneq (, $(wildcard #PROJECT_NAME))\n"
+          "\trm -f #PROJECT_NAME\n"
+          "endif\n"
+          "\n"
+          "install: all ${INSTALL_DIRECTORY}\n"
+          "\tcp -f #PROJECT_NAME ${INSTALL_DIRECTORY}\n"
+          "\n"
+          "uninstall:\n"
+          "ifneq (, $(wildcard ${INSTALL_DIRECTORY}/#PROJECT_NAME))\n"
+          "\trm -f ${INSTALL_DIRECTORY}/#PROJECT_NAME\n"
+          "endif\n"
       },
     },
     .initial_variables = {
       { "#PROJECT_NAME",  "Project Name: ", prompt, },
-      { "#SOURCE_FILES",  "",               set, },
-      { "#INCLUDE_FLAGS", "",               set, },
-      { "#LINK_FLAGS",    "",               set, },
-      { "#OBJECT_FILES",  "",               set },
+      { "#LINK_FLAGS",    "",               set },
+      { "#INCLUDE_FLAGS", "",               set },
       { "#TARGET_NAMES",  "",               set },
-      { "#TARGETS",       "",               set, },
+      { "#TARGETS",       "",               set },
     },
     .dependencies = {
-      miniaudio,
-      raylib,
-      termbox2,
+      {
+        "termbox2",
+        {
+          { "#TARGET_NAMES", "deps/termbox2 ", append, },
+          { "#TARGETS",
+            "deps/termbox2:\n"
+            "\tgit -C deps clone https://github.com/termbox/termbox2 --depth=1\n"
+            "\t$(MAKE) -C deps/termbox2 libtermbox2.a\n"
+            "\n",
+            append,
+          },
+          { "#LINK_FLAGS", "-Ldeps/termbox2 -ltermbox2 ", append, },
+          { "#INCLUDE_FLAGS", "-Ideps/termbox2 ", append, },
+        },
+      },
     },
   },
 };
+
+#endif
