@@ -38,32 +38,32 @@ struct ProjectTemplate {
   std::vector<Dependency> dependencies;
 };
 
+void cleanup_selections(std::vector<std::vector<bool*>>* selections);
 void set_variable(VariableDescriptor*, std::vector<Variable>*);
 std::string process_string(std::string, std::vector<Variable>*);
 
 #include <variable_functions.hpp>
 #include "../config.hpp"
 
-#define CLEANUP_SELECTIONS() {                              \
-  for(unsigned int i = 0; i < selections.size(); i ++)      \
-    for(unsigned int j = 0; j < selections[i].size(); j ++) \
-      delete selections[i][j];                              \
-}
-
 int main() {
   ftxui::ScreenInteractive screen = ftxui::ScreenInteractive::FitComponent();
   
   std::vector<std::string> project_template_names;
+  project_template_names.reserve(project_templates.size());
   for(unsigned int i = 0; i < project_templates.size(); i ++)
     project_template_names.push_back(project_templates[i].name);
+
   int project_template = 0;
   ftxui::Component menu = ftxui::Menu(&project_template_names, &project_template);
 
   ftxui::Component tabs = ftxui::Container::Tab({}, &project_template);
   std::vector<std::vector<bool*>> selections;
+  selections.reserve(project_templates.size());
   for(unsigned int i = 0; i < project_templates.size(); i ++) {
     std::vector<bool*> selections_buffer;
     ftxui::Component tab_buffer = ftxui::Container::Vertical({});
+
+    selections_buffer.reserve(project_templates[i].dependencies.size());
     for(unsigned int j = 0; j < project_templates[i].dependencies.size(); j ++) {
       bool* selected = new bool(false);
       selections_buffer.push_back(selected);
@@ -118,14 +118,15 @@ int main() {
   screen.Loop(renderer);
 
   if(exit_code == 1) {
-    CLEANUP_SELECTIONS();
+    cleanup_selections(&selections);
     return 0;
   }
 
   ProjectTemplate* project_template_pointer = &project_templates[project_template];
   std::vector<bool*>* selections_pointer = &selections[project_template];
-  
+
   std::vector<Variable> variables;
+  variables.reserve(project_template_pointer->initial_variables.size());
 
   for(unsigned int i = 0; i < project_template_pointer->initial_variables.size(); i ++)
     set_variable(&project_template_pointer->initial_variables[i], &variables);
@@ -163,8 +164,14 @@ int main() {
     file.close();
   }
 
-  CLEANUP_SELECTIONS();
+  cleanup_selections(&selections);
   return 0;
+}
+
+void cleanup_selections(std::vector<std::vector<bool*>>* selections) {
+  for(unsigned int i = 0; i < selections->size(); i ++)
+    for(unsigned int j = 0; j < selections->at(i).size(); j ++)
+      delete selections->at(i)[j];
 }
 
 void set_variable(VariableDescriptor* variable_descriptor, std::vector<Variable>* variables) {

@@ -104,14 +104,14 @@ static std::vector<ProjectTemplate> project_templates = {
     .directories = { "#PROJECT_NAME", "#PROJECT_NAME/src" },
     .files = {
       {
-        .path = "#PROJECT_NAME/src/main.c",
-        .contents = "int main() {\n"
+        "#PROJECT_NAME/src/main.c",
+          "int main() {\n"
           "  return 0;\n"
           "}\n",
       },
       {
-        .path = "#PROJECT_NAME/Makefile",
-        .contents = "STANDARD := -std=c99\n"
+        "#PROJECT_NAME/Makefile",
+          "STANDARD := -std=c99\n"
           "LINK_FLAGS := #LINK_FLAGS\n"
           "INCLUDE_FLAGS := #INCLUDE_FLAGS\n"
           "SOURCE_FILES := src/main.c\n"
@@ -174,158 +174,13 @@ static std::vector<ProjectTemplate> project_templates = {
       },
     },
     .initial_variables = {
-      {
-        .name = "#PROJECT_NAME",
-        .argument = "Project Name: ",
-        .function = prompt,
-      },
-      {
-        .name = "#SOURCE_FILES",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#INCLUDE_FLAGS",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#LINK_FLAGS",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#OBJECT_FILES",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#TARGET_NAMES",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#TARGETS",
-        .argument = "",
-        .function = set,
-      },
-    },
-    .dependencies = {
-      miniaudio,
-      raylib,
-      termbox2,
-    },
-  },
-  {
-    .name = "c (current directory)",
-    .directories = { "src" },
-    .files = {
-      {
-        .path = "src/main.c",
-        .contents = "int main() {\n"
-          "  return 0;\n"
-          "}\n",
-      },
-      {
-        .path = "Makefile",
-        .contents = "STANDARD := -std=c99\n"
-          "LINK_FLAGS := #LINK_FLAGS\n"
-          "INCLUDE_FLAGS := #INCLUDE_FLAGS\n"
-          "SOURCE_FILES := src/main.c\n"
-          "HEADER_FILES :=\n"
-          "DEBUG_FLAGS := -Wall -Wextra -Wpedantic\n"
-          "OPTIMIZATION_FLAGS := -Og\n"
-          "CC ?= gcc\n"
-          "INSTALL_DIRECTORY := /usr/local/bin\n"
-          "\n"
-          "OBJECT_FILES := #OBJECT_FILES\n"
-          "\n"
-          "define COMPILE_FILE\n"
-          "\t${CC} -c ${STANDARD} $(1) ${INCLUDE_FLAGS} ${DEBUG_FLAGS} ${OPTIMIZATION_FLAGS} -o build/$(notdir $(1)).o \n"
-          "\t$(eval OBJECT_FILES+=build/$(notdir $(1)).o)\n"
-          "\n"
-          "endef\n"
-          "\n"
-          "all: #TARGET_NAMES compile\n"
-          "\n"
-          "compile: build_prep ${SOURCE_FILES} ${HEADER_FILES}\n"
-          "\t$(foreach SOURCE_FILE,$\\\n"
-          "\t  ${SOURCE_FILES},$\\\n"
-          "\t  $(call COMPILE_FILE,${SOURCE_FILE})$\\\n"
-          "\t)\n"
-          "\t${CC} ${OBJECT_FILES} ${LINK_FLAGS} -o #PROJECT_NAME\n"
-          "\n"
-          "build_prep:\n"
-          "ifeq (, $(wildcard build))\n"
-          "\tmkdir build\n"
-          "endif\n"
-          "\n"
-          "dependencies_prep:\n"
-          "ifeq (, $(wildcard deps))\n"
-          "\tmkdir deps\n"
-          "endif\n"
-          "\n"
-          "#TARGETS\n"
-          "\n"
-          "install: ${INSTALL_DIRECTORY}\n"
-          "ifeq (, $(wildcard #PROJECT_NAME))\n"
-          "\tmake\n"
-          "endif\n"
-          "\tcp -f #PROJECT_NAME ${INSTALL_DIRECTORY}\n"
-          "\n"
-          "uninstall:\n"
-          "ifneq (, $(wildcard ${INSTALL_DIRECTORY}/#PROJECT_NAME))\n"
-          "\trm -f ${INSTALL_DIRECTORY}/#PROJECT_NAME\n"
-          "endif\n"
-          "\n"
-          "clean:\n"
-          "ifneq (, $(wildcard #PROJECT_NAME))\n"
-          "\trm -f #PROJECT_NAME\n"
-          "endif\n"
-          "ifneq (, $(wildcard build))\n"
-          "\trm -rf build\n"
-          "endif\n"
-          "ifneq (, $(wildcard deps))\n"
-          "\trm -rf deps\n"
-          "endif\n"
-      },
-    },
-    .initial_variables = {
-      {
-        .name = "#PROJECT_NAME",
-        .argument = "Project Name: ",
-        .function = prompt
-      },
-      {
-        .name = "#SOURCE_FILES",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#INCLUDE_FLAGS",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#LINK_FLAGS",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#OBJECT_FILES",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#TARGET_NAMES",
-        .argument = "",
-        .function = set,
-      },
-      {
-        .name = "#TARGETS",
-        .argument = "",
-        .function = set,
-      },
+      { "#PROJECT_NAME",  "Project Name: ", prompt, },
+      { "#SOURCE_FILES",  "",               set, },
+      { "#INCLUDE_FLAGS", "",               set, },
+      { "#LINK_FLAGS",    "",               set, },
+      { "#OBJECT_FILES",  "",               set },
+      { "#TARGET_NAMES",  "",               set },
+      { "#TARGETS",       "",               set, },
     },
     .dependencies = {
       miniaudio,
