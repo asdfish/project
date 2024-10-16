@@ -51,10 +51,7 @@ ifneq (, $(wildcard project))
 	rm -f project
 endif
 
-install: ${INSTALL_DIRECTORY}
-ifeq (, $(wildcard project))
-	make
-endif
+install: all ${INSTALL_DIRECTORY}
 	cp -f project ${INSTALL_DIRECTORY}
 
 uninstall:
