@@ -16,12 +16,7 @@ OBJECT_FILES := build/main.o build/variable_functions.o
 all: ${DIRECTORIES} ${DEPENDENCIES} project
 
 ${DIRECTORIES}:
-	$(foreach DIRECTORY,$\
-		${DIRECTORIES},$\
-		$(if $(wildcard ${DIRECTORY}),,$\
-			$(shell mkdir ${DIRECTORY})$\
-		)$\
-	)
+	-mkdir ${DIRECTORIES}
 
 ${OBJECT_FILES}: build/%.o :src/%.cpp
 	${CXX} -c $< ${CXX_FLAGS} -o $@
@@ -41,11 +36,9 @@ clean:
 	-rm -f project
 
 install: all ${INSTALL_DIRECTORY}
-	cp -f project ${INSTALL_DIRECTORY}
+	-cp -f project ${INSTALL_DIRECTORY}
 
 uninstall:
-ifneq (, $(wildcard ${INSTALL_DIRECTORY}/project))
-	rm -f ${INSTALL_DIRECTORY}/project
-endif
+	-rm -f ${INSTALL_DIRECTORY}/project
 
-.PHONY: all clean
+.PHONY: all clean install uninstall
