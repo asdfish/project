@@ -1,3 +1,7 @@
+#include <config.hpp>
+#include <structs.hpp>
+#include <variable_functions.hpp>
+
 #include <array>
 #include <filesystem>
 #include <fstream>
@@ -11,36 +15,10 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
-struct VariableDescriptor {
-  std::string name;
-  std::string argument;
-  void (*function) (std::string*, std::string);
-};
-
-struct Variable {
-  std::string name;
-  std::string contents;
-};
-
-struct Dependency {
-  std::string name;
-  std::vector<VariableDescriptor> modified_variables;
-};
-
-struct ProjectTemplate {
-  std::string name;
-  std::vector<std::string> directories;
-  std::vector<std::array<std::string, 2>> files;
-  std::vector<VariableDescriptor> initial_variables;
-  std::vector<Dependency> dependencies;
-};
-
 void cleanup_selections(std::vector<std::vector<bool*>>* selections);
 void set_variable(VariableDescriptor*, std::vector<Variable>*);
 std::string process_string(std::string, std::vector<Variable>*);
 
-#include <variable_functions.hpp>
-#include "../config.hpp"
 
 int main() {
   ftxui::ScreenInteractive screen = ftxui::ScreenInteractive::FitComponent();

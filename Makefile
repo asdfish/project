@@ -2,12 +2,17 @@ CXX ?= g++
 CXX_FLAGS := -std=c++20 $\
 						 -O2 -march=native -pipe $\
 						 -Wall -Wextra -Wpedantic $\
-						 -Ideps/ftxui/include -Iinclude
+						 -Ideps/ftxui/include -I. -Iinclude
 
 LD_FLAGS := -Ldeps/ftxui/build -lftxui-component -lftxui-dom -lftxui-screen
 
 INSTALL_DIRECTORY := /usr/local/bin
 
+PROCESSED_HEADER_FILES := $(subst .hpp,$\
+														$(if $(findstring clang++,${CXX}),$\
+															.hpp.pch,$\
+															.hpp.gch),$\
+														$(shell find -name '*.hpp' -not -path './deps/*'))
 OBJECT_FILES := $(patsubst src/%.cpp,$\
 									build/%.o,$\
 									$(shell find src -name '*.cpp'))
@@ -24,6 +29,12 @@ endef
 
 all: ${FTXUI_LIBS} project
 
+%.gch: %
+	${CXX} -c $< ${CXX_FLAGS}
+
+%.pch: %
+	${CXX} -c $< ${CXX_FLAGS}
+
 build/%.o :src/%.cpp
 	${CXX} -c $< ${CXX_FLAGS} -o $@
 
@@ -32,7 +43,7 @@ ${FTXUI_LIBS}:
 	cmake -S deps/ftxui -B deps/ftxui/build -DFTXUI_QUIET=ON -DFTXUI_ENABLE_INSTALL=OFF
 	make -C deps/ftxui/build
 
-project: ${OBJECT_FILES}
+project: ${PROCESSED_HEADER_FILES} ${OBJECT_FILES}
 	${CXX} ${OBJECT_FILES} ${LD_FLAGS} -o project
 
 clean:

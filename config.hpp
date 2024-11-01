@@ -1,6 +1,9 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include <structs.hpp>
+#include <variable_functions.hpp>
+
 static std::vector<ProjectTemplate> project_templates = {
   {
     .name = "c",
