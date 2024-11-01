@@ -2,27 +2,32 @@ CXX ?= g++
 CXX_FLAGS := -std=c++20 $\
 						 -O2 -march=native -pipe $\
 						 -Wall -Wextra -Wpedantic $\
-						 -Ideps/ftxui/include -Iinclude $\
+						 -Ideps/ftxui/include -Iinclude
 
 LD_FLAGS := -Ldeps/ftxui/build -lftxui-component -lftxui-dom -lftxui-screen
 
-DIRECTORIES := build deps
-DEPENDENCIES := deps/ftxui
-
 INSTALL_DIRECTORY := /usr/local/bin
 
-OBJECT_FILES := build/main.o build/variable_functions.o
+OBJECT_FILES := $(patsubst src/%.cpp,$\
+									build/%.o,$\
+									$(shell find src -name '*.cpp'))
 
-all: ${DIRECTORIES} ${DEPENDENCIES} project
+FTXUI_LIBS := deps/ftxui/build/libftxui-component.a deps/ftxui/build/libftxui-dom.a deps/ftxui/build/libftxui-screen.a
 
-${DIRECTORIES}:
-	-mkdir ${DIRECTORIES}
+define REMOVE_LIST
+	$(foreach ITEM,$\
+		$(1),$\
+		$(if $(wildcard ${ITEM}),$\
+			$(shell rm ${ITEM})))
 
-${OBJECT_FILES}: build/%.o :src/%.cpp
+endef
+
+all: ${FTXUI_LIBS} project
+
+build/%.o :src/%.cpp
 	${CXX} -c $< ${CXX_FLAGS} -o $@
 
-deps/ftxui:
-	git -C deps clone https://github.com/ArthurSonzogni/ftxui --depth=1 --branch=v5.0.0
+${FTXUI_LIBS}:
 	mkdir deps/ftxui/build
 	cmake -S deps/ftxui -B deps/ftxui/build -DFTXUI_QUIET=ON -DFTXUI_ENABLE_INSTALL=OFF
 	make -C deps/ftxui/build
@@ -31,14 +36,18 @@ project: ${OBJECT_FILES}
 	${CXX} ${OBJECT_FILES} ${LD_FLAGS} -o project
 
 clean:
-	-rm -rf deps
-	-rm -rf build
-	-rm -f project
+	$(call REMOVE_LIST,$\
+		${OBJECT_FILES})
+ifneq (,$(wildcard project))
+	rm project
+endif
 
-install: all ${INSTALL_DIRECTORY}
-	-cp -f project ${INSTALL_DIRECTORY}
+install: all ${INSTALL_DIRECTORY} uninstall
+	cp project ${INSTALL_DIRECTORY}
 
 uninstall:
-	-rm -f ${INSTALL_DIRECTORY}/project
+ifneq (,$(wildcard ${INSTALL_DIRECTORY}/project))
+	rm ${INSTALL_DIRECTORY}/project
+endif
 
 .PHONY: all clean install uninstall
