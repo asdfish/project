@@ -8,26 +8,35 @@ LD_FLAGS := -Ldeps/ftxui/build -lftxui-component -lftxui-dom -lftxui-screen
 
 INSTALL_DIRECTORY := /usr/local/bin
 
-PROCESSED_HEADER_FILES := $(subst .hpp,$\
-														$(if $(findstring clang++,${CXX}),$\
-															.hpp.pch,$\
-															.hpp.gch),$\
-														$(shell find -name '*.hpp' -not -path './deps/*'))
+# comment/uncomment to enable/disable
+# PROCESS_HEADER_FILES := yes
+PROCESSED_HEADER_FILES := $(if ${PROCESS_HEADER_FILES},$\
+														$(subst .hpp,$\
+															$(if $(findstring clang++,${CXX}),$\
+																.hpp.pch,$\
+																.hpp.gch),$\
+															$(shell find -name '*.hpp' -not -path './deps/*')))
 OBJECT_FILES := $(patsubst src/%.cpp,$\
 									build/%.o,$\
 									$(shell find src -name '*.cpp'))
 
 FTXUI_LIBS := deps/ftxui/build/libftxui-component.a deps/ftxui/build/libftxui-dom.a deps/ftxui/build/libftxui-screen.a
 
+PROJECT_REQUIREMENTS := ${FTXUI_LIBS} ${PROCESSED_HEADER_FILES} ${OBJECT_FILES}
+
+define REMOVE
+$(if $(wildcard $(1)),$\
+	rm $(1))
+
+endef
 define REMOVE_LIST
-	$(foreach ITEM,$\
-		$(1),$\
-		$(if $(wildcard ${ITEM}),$\
-			$(shell rm ${ITEM})))
+$(foreach ITEM,$\
+	$(1),$\
+	$(call REMOVE,${ITEM}))
 
 endef
 
-all: ${FTXUI_LIBS} project
+all: project
 
 %.gch: %
 	${CXX} -c $< ${CXX_FLAGS}
@@ -38,27 +47,25 @@ all: ${FTXUI_LIBS} project
 build/%.o :src/%.cpp
 	${CXX} -c $< ${CXX_FLAGS} -o $@
 
-${FTXUI_LIBS}:
+deps/ftxui/build:
 	mkdir deps/ftxui/build
+
+deps/ftxui/build/Makefile: deps/ftxui/build
 	cmake -S deps/ftxui -B deps/ftxui/build -DFTXUI_QUIET=ON -DFTXUI_ENABLE_INSTALL=OFF
+
+${FTXUI_LIBS}: deps/ftxui/build/Makefile
 	make -C deps/ftxui/build
 
-project: ${PROCESSED_HEADER_FILES} ${OBJECT_FILES}
+project: ${PROJECT_REQUIREMENTS}
 	${CXX} ${OBJECT_FILES} ${LD_FLAGS} -o project
 
 clean:
-	$(call REMOVE_LIST,$\
-		${OBJECT_FILES})
-ifneq (,$(wildcard project))
-	rm project
-endif
+	$(call REMOVE_LIST,${PROJECT_REQUIREMENTS})
 
 install: all ${INSTALL_DIRECTORY} uninstall
 	cp project ${INSTALL_DIRECTORY}
 
 uninstall:
-ifneq (,$(wildcard ${INSTALL_DIRECTORY}/project))
-	rm ${INSTALL_DIRECTORY}/project
-endif
+	$(call REMOVE,${INSTALL_DIRECTORY}/project)
 
 .PHONY: all clean install uninstall
