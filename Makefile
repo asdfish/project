@@ -26,7 +26,7 @@ PROJECT_REQUIREMENTS := ${FTXUI_LIBS} ${PROCESSED_HEADER_FILES} ${OBJECT_FILES}
 
 define REMOVE
 $(if $(wildcard $(1)),$\
-	rm $(1))
+	rm -rf $(1))
 
 endef
 define REMOVE_LIST
@@ -61,6 +61,8 @@ project: ${PROJECT_REQUIREMENTS}
 
 clean:
 	$(call REMOVE_LIST,${PROJECT_REQUIREMENTS})
+	$(call REMOVE,project)
+	$(call REMOVE,deps/ftxui/build)
 
 install: all ${INSTALL_DIRECTORY} uninstall
 	cp project ${INSTALL_DIRECTORY}
